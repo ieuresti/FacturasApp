@@ -1,0 +1,60 @@
+package com.iuresti.app.view;
+
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.view.AbstractView;
+import org.supercsv.io.CsvBeanWriter;
+import org.supercsv.io.ICsvBeanWriter;
+import org.supercsv.prefs.CsvPreference;
+
+import com.iuresti.app.model.Cliente;
+
+@Component("listar.csv")
+public class ClienteCsvView extends AbstractView {
+
+	public ClienteCsvView() {
+		setContentType("text/csv");
+	}
+	
+
+	/**
+	 * Método que genera un contenido que es descargable
+	 */
+	@Override
+	protected boolean generatesDownloadContent() {
+		return true;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	protected void renderMergedOutputModel(Map<String, Object> model, HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		
+		response.setHeader("Content-Disposition", "attachment; filename=\"clientes.csv\"");
+		// Pasamos el content type a la respuesta
+		response.setContentType(getContentType());
+		
+		// Obtenemos el listado de clientes
+		Page<Cliente> clientes = (Page<Cliente>) model.get("clientes");
+		
+		// Convertir la lista de clientes en un archivo plano
+		ICsvBeanWriter beanWriter = new CsvBeanWriter(response.getWriter(), CsvPreference.STANDARD_PREFERENCE);
+		
+		// Arreglo de strings que tiene los nombres de los campos de nuestra clase que vamos a convertir a archivo plano
+		String [] header = {"id", "nombre", "apellido", "email", "createAt"};
+		beanWriter.writeHeader(header); // Escribimos una linea para el header
+		
+		// Iteramos a traves de los clientes y guardamos cada obj en el archivo plano
+		for (Cliente cliente: clientes) {
+			beanWriter.write(cliente, header);
+		}
+		beanWriter.close();
+		
+	}
+
+}
